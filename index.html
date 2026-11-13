@@ -1073,10 +1073,21 @@ function initApp(){
   document.documentElement.setAttribute('data-theme-color', savedColor);
   if (localStorage.getItem('rose_theme') === 'dark'){ document.documentElement.setAttribute('data-theme','dark'); document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-sun"></i>'; }
   if (window.speechSynthesis){ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); }; }
-  if (isTeacher()){ document.getElementById('adminBadge').classList.remove('hidden'); document.getElementById('adminTabBtn').classList.remove('hidden'); }
-  else { document.getElementById('adminBadge').classList.add('hidden'); document.getElementById('adminTabBtn').classList.add('hidden'); }
-  loadNewWord(); updateAllStats(); updateCategoryWordList('all'); if (isTeacher()) updateUserList();
-}
+    if (isTeacher()){ 
+      document.getElementById('adminBadge').classList.remove('hidden'); 
+      const adminBtn = document.getElementById('adminTabBtn');
+      if (adminBtn) adminBtn.classList.remove('hidden'); 
+  } else { 
+      // Completely REMOVE the admin elements from the page for students
+      const adminBadge = document.getElementById('adminBadge');
+      if (adminBadge) adminBadge.remove();
+      
+      const adminBtn = document.getElementById('adminTabBtn');
+      if (adminBtn) adminBtn.remove();
+      
+      const adminTab = document.getElementById('adminTab');
+      if (adminTab) adminTab.remove();
+  }
 
 window.removeMissedWord = removeMissedWord; window.deleteUser = deleteUser; window.selectCategory = selectCategory; window.startGame = startGame; window.endGame = endGame; window.speakWord = speakWord; window.checkMatch = checkMatch; window.checkGap = checkGap; window.checkBee = checkBee; window.checkCrossword = checkCrossword; window.checkWSCell = checkWSCell; window.checkBalloon = checkBalloon; window.guessLetter = guessLetter; window.checkWC = checkWC; window.resetWC = resetWC; window.checkMissing = checkMissing;
 
