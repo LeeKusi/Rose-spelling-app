@@ -437,17 +437,26 @@ select:focus{border-color:var(--primary);outline:none;}
   import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-  // YOUR SPECIFIC FIREBASE CONFIG
-  const firebaseConfig = {
-    apiKey: "AIzaSyDn714pREXsDyEDXfdYBohyMEyEiyKhTXA",
-    authDomain: "rose-spellmaster.firebaseapp.com",
-    projectId: "rose-spellmaster",
-    storageBucket: "rose-spellmaster.firebasestorage.app",
-    messagingSenderId: "527742641016",
-    appId: "1:527742641016:web:42f05ff18ab4edad8ade8d",
-    measurementId: "G-4K4188T3TD"
-  };
+    // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
 
+  // Authenticate anonymously so Firestore Security Rules work
+  signInAnonymously(auth)
+    .then(() => {
+      console.log("🔥 Firebase Authenticated & Connected!");
+      
+      // Expose to window so the main script can use them
+      window.fireDB = { db, doc, setDoc, getDoc, collection, getDocs, deleteDoc };
+      
+      // Dispatch an event to let the main script know Firebase is ready
+      window.dispatchEvent(new Event('firebaseReady'));
+    })
+    .catch((error) => {
+      console.error("Auth Error:", error);
+      alert("Database connection failed. Did you enable Anonymous Auth in Firebase?");
+    });
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
