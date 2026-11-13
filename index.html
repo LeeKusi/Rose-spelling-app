@@ -438,8 +438,8 @@ select:focus{border-color:var(--primary);outline:none;}
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
   // YOUR SPECIFIC FIREBASE CONFIG
-   const firebaseConfig = {
-    apiKey: "AIzaSyA4h2AGZKUDmSN4-Ai8bPF9ED9ZGVA_WF4",
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4h2AGZKUDm5N4-Ai8bPF9ED9ZGVa_WF4",
     authDomain: "rose-spelling-app.firebaseapp.com",
     projectId: "rose-spelling-app",
     storageBucket: "rose-spelling-app.firebasestorage.app",
@@ -447,8 +447,11 @@ select:focus{border-color:var(--primary);outline:none;}
     appId: "1:626556818431:web:3c595bd8e8bcf657618dca",
     measurementId: "G-EZ7TYYDCYS"
   };
+
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
+  
+  // Use initializeFirestore with experimentalForceLongPolling to bypass network blocking
   const db = initializeFirestore(app, { experimentalForceLongPolling: true });
   const auth = getAuth(app);
 
@@ -456,7 +459,11 @@ select:focus{border-color:var(--primary);outline:none;}
   signInAnonymously(auth)
     .then(() => {
       console.log("🔥 Firebase Authenticated & Connected!");
+      
+      // Expose to window so the main script can use them
       window.fireDB = { db, doc, setDoc, getDoc, collection, getDocs, deleteDoc };
+      
+      // Dispatch an event to let the main script know Firebase is ready
       window.dispatchEvent(new Event('firebaseReady'));
     })
     .catch((error) => {
