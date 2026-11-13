@@ -251,7 +251,7 @@ select:focus{border-color:var(--primary);outline:none;}
       </div>
       <div class="action-grid">
         <button class="btn btn-primary" id="listenBtn"><i class="fas fa-volume-up"></i> Listen</button>
-        <button class="btn btn-outline" id="nextBtn"><i class="fas fa-forward"></i> Next</button>
+        <button class="btn btn-outline" id="nextBtn"><i class="fas fa-forward"></i> Skip</button>
       </div>
       <div class="input-group">
         <input type="text" id="userInput" placeholder="Type the word..." autocomplete="off" />
@@ -365,7 +365,7 @@ select:focus{border-color:var(--primary);outline:none;}
         <div class="settings-grid">
           <div class="settings-group"><label>🗣️ Voice Gender</label><select id="voiceGender"><option value="female">Female</option><option value="male">Male</option></select></div>
           <div class="settings-group"><label>🌍 Voice Accent</label><select id="voiceAccent"><option value="en-US">American</option><option value="en-GB">British</option><option value="en-AU">Australian</option></select></div>
-          <div class="settings-group"><label>🔊 Speech Rate</label><select id="speechRate"><option value="0.5">Very Slow</option><option value="0.7" selected>Slow</option><option value="1.0">Normal</option><option value="1.3">Fast</option></select></div>
+          <div class="settings-group"><label>🔊 Speech Rate</label><select id="speechRate"><option value="0.5">Very Slow</option><option value="0.7">Slow</option><option value="1.0" selected>Normal</option><option value="1.3">Fast</option></select></div>
           <div class="settings-group"><label>🎨 Color Theme</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="color-btn active" style="width:36px;height:36px;border-radius:50%;border:3px solid var(--text);background:#6C5CE7;cursor:pointer;" data-color="purple"></button>
@@ -439,7 +439,7 @@ select:focus{border-color:var(--primary);outline:none;}
 
   // YOUR SPECIFIC FIREBASE CONFIG
   const firebaseConfig = {
-    apiKey: "AIzaSyA4h2AGZKUDm5N4-Ai8bPF9ED9ZGVa_WF4",
+    apiKey: "AIzaSyA4h2AGZKUDmSN4-Ai8bPF9ED9ZGVA_WF4",
     authDomain: "rose-spelling-app.firebaseapp.com",
     projectId: "rose-spelling-app",
     storageBucket: "rose-spelling-app.firebasestorage.app",
@@ -450,8 +450,6 @@ select:focus{border-color:var(--primary);outline:none;}
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-  
-  // Use initializeFirestore with experimentalForceLongPolling to bypass network blocking
   const db = initializeFirestore(app, { experimentalForceLongPolling: true });
   const auth = getAuth(app);
 
@@ -459,11 +457,7 @@ select:focus{border-color:var(--primary);outline:none;}
   signInAnonymously(auth)
     .then(() => {
       console.log("🔥 Firebase Authenticated & Connected!");
-      
-      // Expose to window so the main script can use them
       window.fireDB = { db, doc, setDoc, getDoc, collection, getDocs, deleteDoc };
-      
-      // Dispatch an event to let the main script know Firebase is ready
       window.dispatchEvent(new Event('firebaseReady'));
     })
     .catch((error) => {
@@ -477,7 +471,7 @@ select:focus{border-color:var(--primary);outline:none;}
 <!-- ========================================== -->
 <script>
 // ================================================================
-// ROSE SPELL MASTER v4.0 - CLOUD EDITION
+// ROSE SPELL MASTER v4.1 - CLOUD EDITION
 // ================================================================
 
 const WORD_CATEGORIES = {
@@ -565,7 +559,6 @@ window.addEventListener('firebaseReady', () => {
   dbReady = true;
   document.getElementById('syncStatus').textContent = "☁️ Connected to Cloud";
   
-  // Check if user is already logged in from a previous session
   const session = localStorage.getItem('rose_session');
   if (session) {
     loginUser(session, cachedUsers[session]?.password, true);
@@ -581,7 +574,6 @@ async function cloudGetUsers() {
     const { collection, getDocs, doc, setDoc } = window.fireDB;
     const snapshot = await getDocs(collection(window.fireDB.db, "users"));
     
-    // If database is empty, create the default admin
     if (snapshot.empty) {
       const defaultAdmin = { password:'admin123', role:'teacher', stats:{correct:0,wrong:0,streak:0,missed:[]} };
       await setDoc(doc(window.fireDB.db, "users", "admin"), defaultAdmin);
@@ -624,7 +616,7 @@ async function cloudDeleteUser(username) {
 // ============================================================
 let currentCategory = 'all';
 let currentWord = null;
-let voiceGender = 'female', voiceAccent = 'en-US', speechRate = 0.7;
+let voiceGender = 'female', voiceAccent = 'en-US', speechRate = 1.0;
 
 function getUserStats(u){ return cachedUsers[u]?.stats || {correct:0,wrong:0,streak:0,missed:[]}; }
 function isTeacher(){ return currentUser && cachedUsers[currentUser]?.role === 'teacher'; }
@@ -657,7 +649,7 @@ async function loginUser(u, p, isSessionRestore = false){
 }
 
 // ============================================================
-// SPELLING
+// SPELLING & SPEECH
 // ============================================================
 function getWordsForCategory(cat){
   if (cat === 'all'){
@@ -701,16 +693,27 @@ async function checkSpelling(input, word){
 function speakWord(word){
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
+  
   const u = new SpeechSynthesisUtterance(word);
   u.rate = speechRate;
   u.pitch = voiceGender === 'female' ? 1.1 : 0.9;
   u.lang = voiceAccent;
+  u.volume = 1.0; 
+
   const voices = window.speechSynthesis.getVoices();
-  let f = voices.filter(v => v.lang.startsWith(voiceAccent));
-  if (voiceGender === 'female') f = f.filter(v => /female|samantha|victoria|zira/i.test(v.name));
-  else f = f.filter(v => /male|david|alex|daniel/i.test(v.name));
+  let f = voices.filter(v => v.lang === voiceAccent || v.lang.replace('_', '-') === voiceAccent);
+  
+  if (voiceGender === 'female') {
+      f = f.filter(v => /female|samantha|victoria|zira|karen|moira/i.test(v.name));
+  } else {
+      f = f.filter(v => /male|david|alex|daniel|george/i.test(v.name));
+  }
+  
   if (f.length > 0) u.voice = f[0];
-  window.speechSynthesis.speak(u);
+  
+  setTimeout(() => {
+      window.speechSynthesis.speak(u);
+  }, 100);
 }
 
 async function updateAllStats(){
@@ -870,7 +873,12 @@ async function handleCheck(){
     speakWord(currentWord);
   }
   await updateAllStats();
-  setTimeout(() => d.className = 'word-display', 1500);
+  
+  // Auto-next after 1.5 seconds
+  setTimeout(() => { 
+      d.className = 'word-display'; 
+      loadNewWord(); 
+  }, 1500);
 }
 
 // ============================================================
@@ -1404,7 +1412,7 @@ window.checkWC = checkWC;
 window.resetWC = resetWC;
 window.checkMissing = checkMissing;
 
-console.log('🌹 Rose Spell Master v4.0 Cloud loaded!');
+console.log('🌹 Rose Spell Master v4.1 Cloud loaded!');
 </script>
 
 </body>
